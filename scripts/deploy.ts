@@ -1,0 +1,29 @@
+import { ethers } from "hardhat";
+
+async function main() {
+  const totalSupply = 1000;
+  const rdxPerBlock = 10;
+  const startBlock = 0;
+
+  // const RDX = await ethers.getContractFactory("RDX");
+  // const rdx = await RDX.deploy(totalSupply);
+  // await rdx.deployed();
+  // console.log(`Token RDX deployed to ${rdx.address}`);
+
+  // const KCP = await ethers.getContractFactory("Ketchup");
+  // const kcp = await KCP.deploy(totalSupply);
+  // await kcp.deployed();                                      
+  // console.log(`Token KCP deployed to ${kcp.address}`);
+
+  const MC = await ethers.getContractFactory("MyMasterchef");
+  const mc = await MC.deploy('0x01C17d59dc1587A0F3250FF7bDD069913575B6A5', rdxPerBlock, startBlock);
+  await mc.deployed();
+  console.log(`Token Masterchef deployed to ${mc.address}`);  
+}
+
+// We recommend this pattern to be able to use async/await everywhere
+// and properly handle errors.
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

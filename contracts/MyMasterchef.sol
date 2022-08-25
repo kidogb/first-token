@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "./Ketchup.sol";
 import "./RDX.sol";
 
-contract MyMasterchef is Ownable {
+contract MyMasterchef {
     struct UserInfo {
-        uint256 amount; // total LP token user provided
+        uint256 amount; // total KCP token user provided
         uint256 rewardDebt;
     }
 
     struct PoolInfo {
-        IERC20 lpToken; // Address of LP token contract.
+        KCP kcpToken; // Address of KCP token contract.
         uint256 allocPoint; // How many allocation points assigned to this pool. RDX to distribute per block.
         uint256 lastRewardBlock; // Last block number that RDX distribution occurs.
         uint256 accRdxPerShare; // Accumulated RDX per share
@@ -25,12 +24,14 @@ contract MyMasterchef is Ownable {
 
     // Info of each pool.
     PoolInfo[] public poolInfo;
-    // Info of each user that stakes LP tokens.
+    // Info of each user that stakes KCP tokens.
     mapping(uint256 => mapping(address => UserInfo)) public userInfo;
     // Total allocation poitns. Must be the sum of all allocation points in all pools.
     uint256 public totalAllocPoint = 0;
     // The block number when RDX staking starts.
     uint256 public startBlock;
+
+    address public owner;
 
     event UpdatePool(uint256 pid, uint256 rdxReward, uint256 accRdxPerShare);
     event Claim(uint256 pid, uint256 rdxReward, uint256 accRdxPerShare);
@@ -47,6 +48,7 @@ contract MyMasterchef is Ownable {
         uint256 _rdxPerBlock,
         uint256 _startBlock
     ) {
+        owner = msg.sender;
         rdx = _rdx;
         rdxPerBlock = _rdxPerBlock;
         startBlock = _startBlock;
@@ -57,14 +59,18 @@ contract MyMasterchef is Ownable {
     }
 
     // Add new liquidity to the pool. Can be called by the owner.
-    function add(uint256 _allocPoint, IERC20 _lpToken) public onlyOwner {
+    function add(uint256 _allocPoint, KCP _kcpToken) public {
+        require(
+            msg.sender == owner,
+            "Caller is not the owner!"
+        );
         uint256 lastRewardBlock = block.number > startBlock
             ? block.number
             : startBlock;
         totalAllocPoint = totalAllocPoint + _allocPoint;
         poolInfo.push(
             PoolInfo({
-                lpToken: _lpToken,
+                kcpToken: _kcpToken,
                 allocPoint: _allocPoint,
                 lastRewardBlock: lastRewardBlock,
                 accRdxPerShare: 0
@@ -81,7 +87,7 @@ contract MyMasterchef is Ownable {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
         uint256 accRdxPerShare = pool.accRdxPerShare;
-        uint256 lpSupply = pool.lpToken.balanceOf(address(this));
+        uint256 lpSupply = pool.kcpToken.balanceOf(address(this));
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
             uint256 rdxReward = ((block.number - pool.lastRewardBlock) *
                 rdxPerBlock *
@@ -98,7 +104,7 @@ contract MyMasterchef is Ownable {
             return;
         }
         // for case 1st deposit
-        uint256 lpSupply = pool.lpToken.balanceOf(address(this));
+        uint256 lpSupply = pool.kcpToken.balanceOf(address(this));
         if (lpSupply == 0) {
             pool.lastRewardBlock = block.number;
             return;
@@ -126,24 +132,24 @@ contract MyMasterchef is Ownable {
         // update rewardDebt
         user.rewardDebt = (user.amount * pool.accRdxPerShare) / 10**18;
         // transfer token
-        safeRdxTransfer(address(this), claimRdx);
+        safeRdxTransfer(msg.sender, claimRdx);
         emit Claim(_pid, claimRdx, pool.accRdxPerShare);
     }
 
-    // Deposit LP tokens to MasterChef for RDX allocation.
+    // Deposit KCP tokens to MasterChef for RDX allocation.
     function deposit(uint256 _pid, uint256 _amount) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         updatePool(_pid);
-        // transfer lpToken
-        pool.lpToken.transferFrom(address(msg.sender), address(this), _amount);
+        // transfer kcpToken
+        pool.kcpToken.transferFrom(address(msg.sender), address(this), _amount);
         // update amount staking
         user.amount = user.amount + _amount;
         user.rewardDebt = (user.amount * pool.accRdxPerShare) / 10**18;
         emit Deposit(msg.sender, _pid, _amount);
     }
 
-    // Withdraw LP tokens from MasterChef.
+    // Withdraw KCP tokens from MasterChef.
     function withdraw(uint256 _pid, uint256 _amount) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
@@ -155,7 +161,7 @@ contract MyMasterchef is Ownable {
         safeRdxTransfer(msg.sender, pending);
         user.amount = user.amount - _amount;
         user.rewardDebt = (user.amount * pool.accRdxPerShare) / 10**18;
-        pool.lpToken.transfer(address(msg.sender), _amount);
+        pool.kcpToken.transfer(address(msg.sender), _amount);
         emit Withdraw(msg.sender, _pid, _amount);
     }
 
@@ -163,7 +169,7 @@ contract MyMasterchef is Ownable {
     function emergencyWithdraw(uint256 _pid) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
-        pool.lpToken.transfer(address(msg.sender), user.amount);
+        pool.kcpToken.transfer(address(msg.sender), user.amount);
         emit EmergencyWithdraw(msg.sender, _pid, user.amount);
         user.amount = 0;
         user.rewardDebt = 0;

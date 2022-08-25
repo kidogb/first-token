@@ -60,10 +60,7 @@ contract MyMasterchef {
 
     // Add new liquidity to the pool. Can be called by the owner.
     function add(uint256 _allocPoint, KCP _kcpToken) public {
-        require(
-            msg.sender == owner,
-            "Caller is not the owner!"
-        );
+        require(msg.sender == owner, "Caller is not the owner!");
         uint256 lastRewardBlock = block.number > startBlock
             ? block.number
             : startBlock;
@@ -132,7 +129,7 @@ contract MyMasterchef {
         // update rewardDebt
         user.rewardDebt = (user.amount * pool.accRdxPerShare) / 10**18;
         // transfer token
-        safeRdxTransfer(msg.sender, claimRdx);
+        safeRdxTransfer(msg.sender, claimRdx * 10**18);
         emit Claim(_pid, claimRdx, pool.accRdxPerShare);
     }
 
@@ -158,7 +155,7 @@ contract MyMasterchef {
         uint256 pending = (user.amount * pool.accRdxPerShare) /
             10**18 -
             user.rewardDebt;
-        safeRdxTransfer(msg.sender, pending);
+        safeRdxTransfer(msg.sender, pending * 10**18);
         user.amount = user.amount - _amount;
         user.rewardDebt = (user.amount * pool.accRdxPerShare) / 10**18;
         pool.kcpToken.transfer(address(msg.sender), _amount);

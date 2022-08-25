@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const rdxPerBlock = 2;
+  const rdxPerBlock = 1;
   const startBlock = 0;
 
   const RDX = await ethers.getContractFactory("RDX");

@@ -33,6 +33,7 @@ contract MyMasterchef is Ownable {
     uint256 public startBlock;
 
     event UpdatePool(uint256 pid, uint256 rdxReward, uint256 accRdxPerShare);
+    event Claim(uint256 pid, uint256 rdxReward, uint256 accRdxPerShare);
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
     event EmergencyWithdraw(
@@ -90,24 +91,13 @@ contract MyMasterchef is Ownable {
         return (user.amount * accRdxPerShare) / 10**18 - user.rewardDebt;
     }
 
-    // claim pending reward RDX
-    function claimPendingRdx(uint256 _pid) public {
-        PoolInfo storage pool = poolInfo[_pid];
-        UserInfo storage user = userInfo[_pid][msg.sender];
-        uint256 rdxReward = ((block.number - pool.lastRewardBlock) *
-            rdxPerBlock *
-            pool.allocPoint) / totalAllocPoint;
-        safeRdxTransfer(address(this), rdxReward);
-        // update rewardDebt = user already claimed
-        user.rewardDebt = (user.amount * pool.accRdxPerShare) / 10**18;
-    }
-
     // Update reward variables of the given pool to be up-to-date.
     function updatePool(uint256 _pid) public {
         PoolInfo storage pool = poolInfo[_pid];
         if (block.number <= pool.lastRewardBlock) {
             return;
         }
+        // for case 1st deposit
         uint256 lpSupply = pool.lpToken.balanceOf(address(this));
         if (lpSupply == 0) {
             pool.lastRewardBlock = block.number;
@@ -116,7 +106,8 @@ contract MyMasterchef is Ownable {
         uint256 rdxReward = ((block.number - pool.lastRewardBlock) *
             rdxPerBlock *
             pool.allocPoint) / totalAllocPoint;
-        safeRdxTransfer(address(this), rdxReward);
+        // Ignored step: minted RDX token for Masterchef: RDX token must be transfered manual to Masterchef before
+        // update pool: accRdxPerShare, lastRewardBlock
         pool.accRdxPerShare =
             pool.accRdxPerShare +
             ((rdxReward * 10**18) / lpSupply);
@@ -124,19 +115,31 @@ contract MyMasterchef is Ownable {
         emit UpdatePool(_pid, rdxReward, lpSupply);
     }
 
+    // claim pending reward RDX
+    function claimPendingRdx(uint256 _pid) public {
+        PoolInfo storage pool = poolInfo[_pid];
+        UserInfo storage user = userInfo[_pid][msg.sender];
+        updatePool(_pid);
+        uint256 claimRdx = (user.amount * pool.accRdxPerShare) /
+            10**18 -
+            user.rewardDebt;
+        // update rewardDebt
+        user.rewardDebt = (user.amount * pool.accRdxPerShare) / 10**18;
+        // transfer token
+        safeRdxTransfer(address(this), claimRdx);
+        emit Claim(_pid, claimRdx, pool.accRdxPerShare);
+    }
+
     // Deposit LP tokens to MasterChef for RDX allocation.
     function deposit(uint256 _pid, uint256 _amount) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         updatePool(_pid);
-        if (user.amount > 0) {
-            uint256 pending = (user.amount * (pool.accRdxPerShare)) / 10**18 - user.rewardDebt;
-            safeRdxTransfer(msg.sender, pending);
-        }
+        // transfer lpToken
         pool.lpToken.transferFrom(address(msg.sender), address(this), _amount);
         // update amount staking
         user.amount = user.amount + _amount;
-        // user.rewardDebt = (user.amount * pool.accRdxPerShare) / 10**18;
+        user.rewardDebt = (user.amount * pool.accRdxPerShare) / 10**18;
         emit Deposit(msg.sender, _pid, _amount);
     }
 
@@ -146,7 +149,8 @@ contract MyMasterchef is Ownable {
         UserInfo storage user = userInfo[_pid][msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
         updatePool(_pid);
-        uint256 pending = (user.amount * pool.accRdxPerShare) /10**18 -
+        uint256 pending = (user.amount * pool.accRdxPerShare) /
+            10**18 -
             user.rewardDebt;
         safeRdxTransfer(msg.sender, pending);
         user.amount = user.amount - _amount;

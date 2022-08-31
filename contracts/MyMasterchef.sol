@@ -142,7 +142,7 @@ contract MyMasterchef {
         pool.kcpToken.transferFrom(address(msg.sender), address(this), _amount);
         // update amount staking
         user.amount = user.amount + _amount;
-        user.rewardDebt = (user.amount * pool.accRdxPerShare) / 10**18;
+        // user.rewardDebt = (user.amount * pool.accRdxPerShare) / 10**18;
         emit Deposit(msg.sender, _pid, _amount);
     }
 

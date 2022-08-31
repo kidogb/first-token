@@ -81,8 +81,8 @@ contract MyMasterchef {
         view
         returns (uint256)
     {
-        PoolInfo storage pool = poolInfo[_pid];
-        UserInfo storage user = userInfo[_pid][_user];
+        PoolInfo memory pool = poolInfo[_pid];
+        UserInfo memory user = userInfo[_pid][_user];
         uint256 accRdxPerShare = pool.accRdxPerShare;
         uint256 lpSupply = pool.kcpToken.balanceOf(address(this));
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
@@ -120,7 +120,7 @@ contract MyMasterchef {
 
     // claim pending reward RDX
     function claimPendingRdx(uint256 _pid) public {
-        PoolInfo storage pool = poolInfo[_pid];
+        PoolInfo memory pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         updatePool(_pid);
         uint256 claimRdx = (user.amount * pool.accRdxPerShare) /

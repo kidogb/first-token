@@ -6,7 +6,7 @@ import "./ERC20.sol";
 
 // token only mint once time for creator
 contract RDX is ERC20 {
-    constructor(uint256 initialSupply) ERC20("RDX", "RDX") {
-        _mint(msg.sender, initialSupply);
+    constructor() ERC20("RDX", "RDX") {
+        _mint(msg.sender, 10**8 * 10**18);
     }
 }

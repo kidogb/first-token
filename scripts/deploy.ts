@@ -11,13 +11,14 @@ async function main() {
 
   const KCP = await ethers.getContractFactory("Ketchup");
   const kcp = await KCP.deploy();
-  await kcp.deployed();                                      
+  await kcp.deployed();
   console.log(`Token KCP deployed to ${kcp.address}`);
 
   const MC = await ethers.getContractFactory("MyMasterchef");
   const mc = await MC.deploy(rdx.address, rdxPerBlock, startBlock);
   await mc.deployed();
-  console.log(`Token Masterchef deployed to ${mc.address}`);  
+  console.log(`Token Masterchef deployed to ${mc.address}`);
+
 }
 
 // We recommend this pattern to be able to use async/await everywhere

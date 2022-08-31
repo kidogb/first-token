@@ -150,7 +150,7 @@ contract MyMasterchef {
     function withdraw(uint256 _pid, uint256 _amount) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
-        require(user.amount >= _amount, "withdraw: not good");
+        require(user.amount >= _amount, "exceeds withdrawal limit");
         updatePool(_pid);
         uint256 pending = (user.amount * pool.accRdxPerShare) /
             10**18 -

@@ -26,6 +26,14 @@ contract ERC20 {
         _symbol = symbol_;
     }
 
+    function name() public view virtual returns (string memory) {
+        return _name;
+    }
+
+    function symbol() public view virtual returns (string memory) {
+        return _symbol;
+    }
+
     function decimals() public pure returns (uint8) {
         return 18;
     }

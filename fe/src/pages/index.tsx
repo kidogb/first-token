@@ -286,8 +286,8 @@ const Home: NextPage = () => {
                 <Text as='samp' noOfLines={1} variant='outline' fontSize='xl' colorScheme='blue'>{currentAccount}</Text>
               </Link>
             </Heading>
-            <Text as='em' noOfLines={1} fontSize='md'>{kcpBalance} KCP</Text>
-            <Text as='em' noOfLines={1} fontSize='md'>{rdxBalance} RDX</Text>
+            <Text as='em' noOfLines={1} fontSize='md'>{parseFloat(kcpBalance || '0').toLocaleString('en')} KCP</Text>
+            <Text as='em' noOfLines={1} fontSize='md'>{parseFloat(rdxBalance || '0').toLocaleString('en')} RDX</Text>
           </Box>
         }
         {currentAccount &&

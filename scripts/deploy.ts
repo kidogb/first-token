@@ -9,7 +9,7 @@ async function main() {
   await rdx.deployed();
   console.log(`Token RDX deployed to ${rdx.address}`);
 
-  const KCP = await ethers.getContractFactory("Ketchup");
+  const KCP = await ethers.getContractFactory("KCP");
   const kcp = await KCP.deploy();
   await kcp.deployed();
   console.log(`Token KCP deployed to ${kcp.address}`);

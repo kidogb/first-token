@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./Ketchup.sol";
+import "./KCP.sol";
 import "./RDX.sol";
 
 contract MyMasterchef {
@@ -106,14 +106,12 @@ contract MyMasterchef {
             pool.lastRewardBlock = block.number;
             return;
         }
-        uint256 rdxReward = ((block.number - pool.lastRewardBlock) *
+        uint256 rdxReward = (block.number - pool.lastRewardBlock) *
             rdxPerBlock *
-            pool.allocPoint) / totalAllocPoint;
+            (pool.allocPoint / totalAllocPoint);
         // Ignored step: minted RDX token for Masterchef: RDX token must be transfered manual to Masterchef before
         // update pool: accRdxPerShare, lastRewardBlock
-        pool.accRdxPerShare =
-            pool.accRdxPerShare +
-            ((rdxReward * 10**18) / lpSupply);
+        pool.accRdxPerShare += ((rdxReward * 10**18) / lpSupply);
         pool.lastRewardBlock = block.number;
         emit UpdatePool(_pid, rdxReward, lpSupply);
     }

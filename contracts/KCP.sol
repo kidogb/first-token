@@ -6,7 +6,7 @@ import "./ERC20.sol";
 
 // token can mint any time by any one
 contract KCP is ERC20 {
-    constructor(uint256 initialSupply) ERC20("Ketchup", "KCP") {}
+    constructor() ERC20("KCP", "KCP") {}
 
     function mintToken(address to, uint256 _quantity) public {
         _mint(to, _quantity);

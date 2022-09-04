@@ -75,25 +75,6 @@ contract MyMasterchef {
         );
     }
 
-    // View function to see pending RDX on frontend.
-    function pendingRdx(uint256 _pid, address _user)
-        external
-        view
-        returns (uint256)
-    {
-        PoolInfo memory pool = poolInfo[_pid];
-        UserInfo memory user = userInfo[_pid][_user];
-        uint256 accRdxPerShare = pool.accRdxPerShare;
-        uint256 lpSupply = pool.kcpToken.balanceOf(address(this));
-        if (block.number > pool.lastRewardBlock && lpSupply != 0) {
-            uint256 rdxReward = ((block.number - pool.lastRewardBlock) *
-                rdxPerBlock *
-                pool.allocPoint) / totalAllocPoint;
-            accRdxPerShare = accRdxPerShare + ((rdxReward * 10**18) / lpSupply);
-        }
-        return (user.amount * accRdxPerShare) / 10**18 - user.rewardDebt;
-    }
-
     // Update reward variables of the given pool to be up-to-date.
     function updatePool(uint256 _pid) public {
         PoolInfo storage pool = poolInfo[_pid];
@@ -114,6 +95,25 @@ contract MyMasterchef {
         pool.accRdxPerShare += ((rdxReward * 10**18) / lpSupply);
         pool.lastRewardBlock = block.number;
         emit UpdatePool(_pid, rdxReward, lpSupply);
+    }
+
+    // View function to see pending RDX on frontend.
+    function pendingRdx(uint256 _pid, address _user)
+        external
+        view
+        returns (uint256)
+    {
+        PoolInfo memory pool = poolInfo[_pid];
+        UserInfo memory user = userInfo[_pid][_user];
+        uint256 accRdxPerShare = pool.accRdxPerShare;
+        uint256 lpSupply = pool.kcpToken.balanceOf(address(this));
+        if (block.number > pool.lastRewardBlock && lpSupply != 0) {
+            uint256 rdxReward = ((block.number - pool.lastRewardBlock) *
+                rdxPerBlock *
+                pool.allocPoint) / totalAllocPoint;
+            accRdxPerShare = accRdxPerShare + ((rdxReward * 10**18) / lpSupply);
+        }
+        return (user.amount * accRdxPerShare) / 10**18 - user.rewardDebt;
     }
 
     // claim pending reward RDX

@@ -93,15 +93,15 @@ const Home: NextPage = () => {
 
     // check rewards
     mc.pendingRdx(0, currentAccount).then((result: any) => {
-      setRewards(result)
+      setRewards(ethers.utils.formatEther(result))
     }).catch((e: any) => console.log(e))
     // repeat check rewards
     const interval = setInterval(() => {
       console.log('Checking rewards...')
       mc.pendingRdx(0, currentAccount).then((result: any) => {
-        setRewards(result)
+        setRewards(ethers.utils.formatEther(result))
       }).catch((e: any) => console.log(e))
-    }, 60000); // set query every 60s
+    }, 10000); // set query every 60s
 
     provider.getNetwork().then((result) => {
       setChainName(result.name)
@@ -198,16 +198,12 @@ const Home: NextPage = () => {
         setLoading({ ...loading, deposit: true })
         // asume already has 1 pool with _pid = 0
         const txDeposit = await mcContract.deposit(0, parseEther(amount))
-        txDeposit.wait().then(() => {
-          displayNotify('Deposit successfully', 'success')
-          updatePoolAndWallet()
-          setLoading({ ...loading, deposit: false })
-        }).catch((e: any) => {
-          handleContractInteractionError(e)
-          setLoading({ ...loading, deposit: true })
-        })
+        await txDeposit.wait()
+        displayNotify('Deposit successfully', 'success')
+        updatePoolAndWallet()
       } catch (error) {
         handleContractInteractionError(error)
+      } finally {
         setLoading({ ...loading, deposit: false })
       }
     }
@@ -219,16 +215,12 @@ const Home: NextPage = () => {
         setLoading({ ...loading, withdraw: true })
         // asume already has 1 pool with _pid = 0
         const txWithdraw = await mcContract.withdraw(0, parseEther(amount))
-        txWithdraw.wait().then(() => {
-          displayNotify('Withdraw successfully', 'success')
-          updatePoolAndWallet()
-          setLoading({ ...loading, withdraw: false })
-        }).catch((e: any) => {
-          handleContractInteractionError(e)
-          setLoading({ ...loading, deposit: true })
-        })
+        await txWithdraw.wait()
+        displayNotify('Withdraw successfully', 'success')
+        updatePoolAndWallet()
       } catch (error) {
         handleContractInteractionError(error)
+      } finally {
         setLoading({ ...loading, withdraw: false })
       }
     }
@@ -239,7 +231,7 @@ const Home: NextPage = () => {
       try {
         setLoading({ ...loading, viewRewards: true })
         const rewards = await mcContract.pendingRdx(0, currentAccount)
-        setRewards(rewards)
+        setRewards(ethers.utils.formatEther(rewards))
         setLoading({ ...loading, viewRewards: false })
       } catch (error) {
         handleContractInteractionError(error)
@@ -253,16 +245,12 @@ const Home: NextPage = () => {
       try {
         setLoading({ ...loading, claim: true })
         const txClaim = await mcContract.claimPendingRdx(0)
-        txClaim.wait().then(() => {
-          displayNotify('Claim successfully', 'success')
-          updatePoolAndWallet()
-          setLoading({ ...loading, claim: false })
-        }).catch((e: any) => {
-          handleContractInteractionError(e)
-          setLoading({ ...loading, deposit: true })
-        })
+        await txClaim.wait()
+        displayNotify('Claim successfully', 'success')
+        updatePoolAndWallet()
       } catch (error) {
         handleContractInteractionError(error)
+      } finally {
         setLoading({ ...loading, claim: false })
       }
     }

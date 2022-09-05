@@ -16,6 +16,7 @@ contract MyMasterchef {
         uint256 lastRewardBlock; // Last block number that RDX distribution occurs.
         uint256 accRdxPerShare; // Accumulated RDX per share
     }
+
     // RDX token - reward token
     RDX public rdx;
 
@@ -50,7 +51,7 @@ contract MyMasterchef {
     ) {
         owner = msg.sender;
         rdx = _rdx;
-        rdxPerBlock = _rdxPerBlock;
+        rdxPerBlock = _rdxPerBlock * 10**18; // in decimals
         startBlock = _startBlock;
     }
 
@@ -92,7 +93,7 @@ contract MyMasterchef {
             (pool.allocPoint / totalAllocPoint);
         // Ignored step: minted RDX token for Masterchef: RDX token must be transfered manual to Masterchef before
         // update pool: accRdxPerShare, lastRewardBlock
-        pool.accRdxPerShare += ((rdxReward * 10**18) / lpSupply);
+        pool.accRdxPerShare += ((rdxReward * 1e12) / lpSupply);
         pool.lastRewardBlock = block.number;
         emit UpdatePool(_pid, rdxReward, lpSupply);
     }
@@ -111,63 +112,58 @@ contract MyMasterchef {
             uint256 rdxReward = ((block.number - pool.lastRewardBlock) *
                 rdxPerBlock *
                 pool.allocPoint) / totalAllocPoint;
-            accRdxPerShare = accRdxPerShare + ((rdxReward * 10**18) / lpSupply);
+            accRdxPerShare = accRdxPerShare + ((rdxReward * 1e12) / lpSupply);
         }
-        return (user.amount * accRdxPerShare) / 10**18 - user.rewardDebt;
+        return (user.amount * accRdxPerShare) / 1e12 - user.rewardDebt;
     }
 
     // claim pending reward RDX
     function claimPendingRdx(uint256 _pid) public {
+        updatePool(_pid);
         PoolInfo memory pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
-        updatePool(_pid);
+        // updatePool(_pid);
         uint256 claimRdx = (user.amount * pool.accRdxPerShare) /
-            10**18 -
+            1e12 -
             user.rewardDebt;
         // update rewardDebt
-        user.rewardDebt = (user.amount * pool.accRdxPerShare) / 10**18;
+        user.rewardDebt = (user.amount * pool.accRdxPerShare) / 1e12;
         // transfer token
-        safeRdxTransfer(msg.sender, claimRdx * 10**18);
+        safeRdxTransfer(msg.sender, claimRdx);
         emit Claim(_pid, claimRdx, pool.accRdxPerShare);
     }
 
     // Deposit KCP tokens to MasterChef for RDX allocation.
     function deposit(uint256 _pid, uint256 _amount) public {
+        updatePool(_pid);
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
-        updatePool(_pid);
+        // updatePool(_pid);
         // transfer kcpToken
         pool.kcpToken.transferFrom(address(msg.sender), address(this), _amount);
         // update amount staking
         user.amount = user.amount + _amount;
-        // user.rewardDebt = (user.amount * pool.accRdxPerShare) / 10**18;
+        user.rewardDebt =(user.amount * pool.accRdxPerShare) /
+            1e12;
         emit Deposit(msg.sender, _pid, _amount);
     }
 
     // Withdraw KCP tokens from MasterChef.
     function withdraw(uint256 _pid, uint256 _amount) public {
+        updatePool(_pid);
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         require(user.amount >= _amount, "exceeds withdrawal limit");
-        updatePool(_pid);
+        // updatePool(_pid);
         uint256 pending = (user.amount * pool.accRdxPerShare) /
-            10**18 -
+            1e12 -
             user.rewardDebt;
-        safeRdxTransfer(msg.sender, pending * 10**18);
+        safeRdxTransfer(msg.sender, pending);
         user.amount = user.amount - _amount;
-        user.rewardDebt = (user.amount * pool.accRdxPerShare) / 10**18;
+        user.rewardDebt =(user.amount * pool.accRdxPerShare) /
+            1e12;
         pool.kcpToken.transfer(address(msg.sender), _amount);
         emit Withdraw(msg.sender, _pid, _amount);
-    }
-
-    // Withdraw without caring about rewards. EMERGENCY ONLY.
-    function emergencyWithdraw(uint256 _pid) public {
-        PoolInfo storage pool = poolInfo[_pid];
-        UserInfo storage user = userInfo[_pid][msg.sender];
-        pool.kcpToken.transfer(address(msg.sender), user.amount);
-        emit EmergencyWithdraw(msg.sender, _pid, user.amount);
-        user.amount = 0;
-        user.rewardDebt = 0;
     }
 
     // Safe transfer function, check case if not enough balance for transfer

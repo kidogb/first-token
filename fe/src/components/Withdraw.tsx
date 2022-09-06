@@ -1,15 +1,16 @@
 // src/components/TransferERC20.tsx
 import React, { useState } from 'react'
-import { Badge, Button, Center, InputGroup, InputRightAddon, NumberInput, NumberInputField, FormControl, FormLabel } from '@chakra-ui/react'
+import { Text, Flex, Spacer, Box, Badge, Button, Center, InputGroup, InputRightAddon, NumberInput, NumberInputField, FormControl, FormLabel } from '@chakra-ui/react'
 
 interface Props {
   currentAccount: string | undefined
+  kcpDeposited: string | undefined,
   loadingWithdraw: boolean,
   onWithdraw: (_pid: Number, amount: string) => void
 }
 
 
-export default function Withdraw({ currentAccount, loadingWithdraw, onWithdraw }: Props) {
+export default function Withdraw({ currentAccount, kcpDeposited, loadingWithdraw, onWithdraw }: Props) {
   const [amount, setAmount] = useState<string>('0')
 
   async function handleWithdraw(event: React.FormEvent) {
@@ -22,9 +23,17 @@ export default function Withdraw({ currentAccount, loadingWithdraw, onWithdraw }
   return (
     <form onSubmit={handleWithdraw}>
       <FormControl>
-        <FormLabel htmlFor='amount' h='8'>Withdraw: </FormLabel>
+        <Flex p={2}>
+          <Box>
+            <Text as='samp' noOfLines={1} variant='outline' fontSize='sm'>Withdraw:</Text>
+          </Box>
+          <Spacer />
+          <Box>
+            <Text onClick={() => setAmount(kcpDeposited || '')} as='samp' noOfLines={1} variant='outline' fontSize='sm'>{kcpDeposited}</Text>
+          </Box>
+        </Flex>
         <InputGroup>
-          <NumberInput defaultValue={amount} min={1} max={1000} onChange={handleChange}>
+          <NumberInput value={amount} min={1} max={1000} onChange={handleChange}>
             <NumberInputField />
           </NumberInput>
           <InputRightAddon><Badge>KCP</Badge></InputRightAddon>

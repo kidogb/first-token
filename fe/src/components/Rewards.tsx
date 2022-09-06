@@ -1,6 +1,6 @@
 // src/components/TransferERC20.tsx
 import React, { useState } from 'react'
-import { Text, Badge, Button, IconButton, Center, InputGroup, InputRightAddon, NumberInput, NumberInputField, FormControl, FormLabel, Grid, GridItem } from '@chakra-ui/react'
+import { Spacer, Flex, Box, Text, Badge, Button, IconButton, Center, InputGroup, InputRightAddon, NumberInput, NumberInputField, FormControl, FormLabel, Grid, GridItem } from '@chakra-ui/react'
 import { VscDebugRestart } from 'react-icons/vsc'
 
 interface Props {
@@ -8,28 +8,42 @@ interface Props {
   rewards: string | undefined,
   loadingRewards: boolean,
   loadingClaim: boolean,
+  loadingClaimAll: boolean,
   onClaim: (amount: string) => void,
+  onClaimAll: () => void,
   onViewRewards: () => void
 }
 
-export default function Rewards({ currentAccount, rewards, loadingRewards, loadingClaim, onClaim, onViewRewards }: Props) {
+export default function Rewards({ currentAccount, rewards, loadingRewards, loadingClaim, loadingClaimAll, onClaim, onClaimAll, onViewRewards }: Props) {
   const [amount, setAmount] = useState<string>('0')
 
-  async function transfer(event: React.FormEvent) {
+  async function claim(event: React.FormEvent) {
     event.preventDefault()
     onClaim(amount)
+  }
+
+  async function claimAll(event: React.FormEvent) {
+    event.preventDefault()
+    onClaimAll()
   }
 
   const handleChange = (value: string) => setAmount(value)
 
   return (
-    <form onSubmit={transfer}>
+    <div>
       <FormControl>
-        <Grid>
-          <GridItem colSpan={2} h='10'>
-            <FormLabel htmlFor='amount'>{`Rewards: ${rewards}`} </FormLabel>
-          </GridItem>
-          <GridItem colStart={24} colEnd={24} h='10'>
+        <Flex p={2}>
+          <Box>
+            <Text onClick={() => setAmount(rewards || '')} as='samp' noOfLines={1} variant='outline' fontSize='sm'>Rewards:</Text>
+          </Box>
+          <Spacer />
+          <Box>
+            <Text onClick={() => setAmount(rewards || '')} as='samp' noOfLines={1} variant='outline' fontSize='sm'>{rewards}</Text>
+          </Box>
+        </Flex>
+
+
+        {/* <GridItem colStart={24} colEnd={24} h='10'>
             <IconButton
               isDisabled={!currentAccount}
               onClick={onViewRewards}
@@ -39,9 +53,8 @@ export default function Rewards({ currentAccount, rewards, loadingRewards, loadi
               icon={<VscDebugRestart />}
               isLoading={loadingRewards}
             />
-          </GridItem>
+          </GridItem> */}
 
-        </Grid>
         <InputGroup>
           <NumberInput min={0} max={Number(rewards)} value={amount} onChange={handleChange}>
             <NumberInputField />
@@ -51,15 +64,25 @@ export default function Rewards({ currentAccount, rewards, loadingRewards, loadi
 
         <Center mt={2}>
           <Button
-            type="submit"
+            mr={3}
+            onClick={claim}
             isDisabled={!currentAccount}
             isLoading={loadingClaim}
             loadingText='Claiming'
           >
             Claim
           </Button>
+          <Button
+            mr={3}
+            onClick={claimAll}
+            isDisabled={!currentAccount}
+            isLoading={loadingClaimAll}
+            loadingText='Claiming'
+          >
+            Claim all
+          </Button>
         </Center>
       </FormControl>
-    </form>
+    </div>
   )
 }

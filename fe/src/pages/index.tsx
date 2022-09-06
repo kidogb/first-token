@@ -2,8 +2,8 @@
 import type { NextPage } from 'next'
 import Head from 'next/head'
 import NextLink from "next/link"
-import { VStack, Stack, Heading, Box } from '@chakra-ui/layout'
-import { Text, Divider, Badge, Link, useToast } from '@chakra-ui/react'
+import { Flex, VStack, Stack, Heading, Box } from '@chakra-ui/layout'
+import { Spacer, Text, Divider, Badge, Link, useToast } from '@chakra-ui/react'
 import { useState, useEffect } from 'react'
 import { BigNumber, ethers } from 'ethers'
 import { parseEther } from 'ethers/lib/utils'
@@ -22,6 +22,7 @@ interface Loading {
   approve: boolean,
   deposit: boolean,
   claim: boolean,
+  claimAll: boolean,
   viewRewards: boolean,
   withdraw: boolean
 }
@@ -36,8 +37,10 @@ const Home: NextPage = () => {
   const [chainname, setChainName] = useState<string | undefined>('--')
   const [isDisconnect, setIsDisconnect] = useState(true)
   const [rewards, setRewards] = useState<string | undefined>('--')
-  const [loading, setLoading] = useState<Loading>({ approve: false, deposit: false, claim: false, viewRewards: false, withdraw: false })
+  const [loading, setLoading] = useState<Loading>({ approve: false, deposit: false, claim: false, claimAll: false, viewRewards: false, withdraw: false })
   const [totalDeposited, setTotalDeposited] = useState<string | undefined>('--')
+  const [userDeposited, setUserDeposited] = useState<string | undefined>('--')
+  const [allowance, setAllowance] = useState<string | undefined>()
 
   const toast = useToast()
 
@@ -89,6 +92,16 @@ const Home: NextPage = () => {
     // check balance of pool
     kcp.balanceOf(MCADDRESS).then((result: BigNumber) => {
       setTotalDeposited(ethers.utils.formatEther(result));
+    }).catch((e: any) => console.log(e))
+
+    // check balance user deposited
+    mc.userInfo(0, currentAccount).then((result: { amount: BigNumber, rewardDebt: BigNumber }) => {
+      setUserDeposited(ethers.utils.formatEther(result.amount));
+    }).catch((e: any) => console.log(e))
+
+    // check allowance
+    kcp.allowance(currentAccount, MCADDRESS).then((result: BigNumber) => {
+      setAllowance(ethers.utils.formatEther(result));
     }).catch((e: any) => console.log(e))
 
     // check rewards
@@ -144,6 +157,7 @@ const Home: NextPage = () => {
     viewPendingRewards()
     viewBalances()
     viewPoolBalance()
+    viewUserDepositedBalance()
   }
 
   // check total balalance in pool
@@ -173,7 +187,30 @@ const Home: NextPage = () => {
     } catch (error) {
       console.log('View balances error: ', error)
     }
+  }
 
+  // check total user deposited balalance in pool
+  const viewUserDepositedBalance = async () => {
+    try {
+      if (currentAccount && mcContract) {
+        const userInfo = await mcContract.userInfo(0, currentAccount)
+        setUserDeposited(ethers.utils.formatEther(userInfo.amount));
+      }
+    } catch (error) {
+      console.log('View user deposited balances error: ', error)
+    }
+  }
+
+  // check allowance
+  const viewAllowance = async () => {
+    try {
+      if (currentAccount && kcpContract) {
+        const alw = await kcpContract.allowance(currentAccount, MCADDRESS)
+        setAllowance(ethers.utils.formatEther(alw))
+      }
+    } catch (error) {
+      console.log('View user deposited balances error: ', error)
+    }
   }
 
   const onClickApprove = async (amount: string) => {
@@ -181,12 +218,12 @@ const Home: NextPage = () => {
       try {
         setLoading({ ...loading, approve: true })
         const txApprove = await kcpContract.approve(MCADDRESS, parseEther(amount))
-        txApprove.wait().then(() => {
-          displayNotify('Approve successfully', 'success')
-          setLoading({ ...loading, approve: false })
-        })
+        await txApprove.wait()
+        displayNotify('Approve successfully', 'success')
+        viewAllowance()
       } catch (error) {
         handleContractInteractionError(error)
+      } finally {
         setLoading({ ...loading, approve: false })
       }
     }
@@ -256,6 +293,23 @@ const Home: NextPage = () => {
     }
   }
 
+  const onClickClaimAllRewards = async () => {
+    if (currentAccount && mcContract) {
+      try {
+        setLoading({ ...loading, claimAll: true })
+        // asume already has 1 pool with _pid = 0
+        const txWithdraw = await mcContract.withdraw(0, parseEther("0"))
+        await txWithdraw.wait()
+        displayNotify('Claim successfully', 'success')
+        updatePoolAndWallet()
+      } catch (error) {
+        handleContractInteractionError(error)
+      } finally {
+        setLoading({ ...loading, claimAll: false })
+      }
+    }
+  }
+
 
   return (
     <>
@@ -266,17 +320,29 @@ const Home: NextPage = () => {
       <Header connect={onClickConnect} disconnect={onClickDisconnect} isDisconnect={isDisconnect} />
       <VStack>
 
-        {currentAccount
-          && <Box mb={0} p={4} w='100%' borderWidth="1px" borderRadius="lg">
-            <Badge fontSize='xl' colorScheme='green'>{chainname?.toUpperCase()}</Badge>
-            <Heading my={4} fontSize='xl'>
-              <Link href={`https://goerli.etherscan.io/address/${currentAccount}`} isExternal>
-                <Text as='samp' noOfLines={1} variant='outline' fontSize='xl' colorScheme='blue'>{currentAccount}</Text>
-              </Link>
-            </Heading>
-            <Text as='em' noOfLines={1} fontSize='md'>{parseFloat(kcpBalance || '0').toLocaleString('en')} KCP</Text>
-            <Text as='em' noOfLines={1} fontSize='md'>{parseFloat(rdxBalance || '0').toLocaleString('en')} RDX</Text>
-          </Box>
+        {false &&
+          <Flex>
+            <Box></Box>
+            <Spacer/>
+            <Box>
+              <Flex align='right' justify='right' w='80%' p={2}>
+                {/* <Box w='20%'>
+              <Text as='em' noOfLines={1} fontSize='md'>{parseFloat(kcpBalance || '0').toLocaleString('en')} KCP</Text>
+            </Box> */}
+                <Box w='30%'>
+                  <Text as='em' noOfLines={1} fontSize='md'>{parseFloat(rdxBalance || '0').toLocaleString('en')} RDX</Text>
+                </Box>
+                <Box w='20%'>
+                  <Link href={`https://goerli.etherscan.io/address/${currentAccount}`} isExternal>
+                    <Text as='samp' noOfLines={1} variant='outline' fontSize='md' colorScheme='blue'>{currentAccount}</Text>
+                  </Link>
+                </Box>
+                <Box w='20%'>
+                  <Text as='samp' fontSize='md' colorScheme='green'>{chainname?.toUpperCase()}</Text>
+                </Box>
+              </Flex>
+            </Box>
+          </Flex>
         }
         {currentAccount &&
           <Box mb={0} p={4} w='100%' borderWidth="1px" borderRadius="lg">
@@ -291,6 +357,8 @@ const Home: NextPage = () => {
                 <Heading my={4} fontSize='xl'></Heading>
                 <Deposit
                   currentAccount={currentAccount}
+                  kcpBalance={kcpBalance}
+                  allowance={allowance}
                   onApprove={onClickApprove}
                   onDeposit={onClickDeposit}
                   loadingApprove={loading?.approve}
@@ -304,7 +372,9 @@ const Home: NextPage = () => {
                   rewards={rewards}
                   loadingRewards={loading.viewRewards}
                   loadingClaim={loading.claim}
+                  loadingClaimAll={loading.claimAll}
                   onClaim={onClickClaimRewards}
+                  onClaimAll={onClickClaimAllRewards}
                   onViewRewards={viewPendingRewards}
                 />
               </Box>
@@ -312,6 +382,7 @@ const Home: NextPage = () => {
                 <Heading my={4} fontSize='xl'></Heading>
                 <Withdraw
                   currentAccount={currentAccount}
+                  kcpDeposited={userDeposited}
                   onWithdraw={onClickWithdraw}
                   loadingWithdraw={loading.withdraw}
                 />

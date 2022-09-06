@@ -23,26 +23,35 @@ describe('masterchef', () => {
     })
 
     it('deposit token and check reward', async () => {
-        const [owner, addr1, addr2] = await ethers.getSigners()
+        const [owner, user1] = await ethers.getSigners()
         // mint kcp token
         await kcpContract.mintToken(owner.address, ethers.utils.parseEther("1000"))
+        await kcpContract.mintToken(user1.address, ethers.utils.parseEther("1000"))
         // add a pool to Masterchef
         await masterchefContract.add(1, kcpContract.address)
         // transfer RDX to Masterchef
         await rdxContract.connect(owner).transfer(masterchefContract.address, ethers.utils.parseEther("1000"));
         // approve and deposit kcp token
         await kcpContract.connect(owner).approve(masterchefContract.address, ethers.utils.parseEther("100"))
-        await masterchefContract.connect(owner).deposit(0, ethers.utils.parseEther("10"))
+        await kcpContract.connect(user1).approve(masterchefContract.address, ethers.utils.parseEther("100"))
+        await masterchefContract.connect(owner).deposit(0, ethers.utils.parseEther("9"))
+        await masterchefContract.connect(user1).deposit(0, ethers.utils.parseEther("1"))
+        // verify pool balance
+        const lpPool = await kcpContract.balanceOf(masterchefContract.address)
+        expect(lpPool).to.equal(ethers.utils.parseEther("10"))
 
         // wait for 10 block       
         await hre.network.provider.send("hardhat_mine", ["0xA"]);
-        const rdxRewards = await masterchefContract.connect(owner).pendingRdx(0, owner.address)
-        expect(rdxRewards).to.equal(ethers.utils.parseEther("10").toString())
+        const ownerRdxRewards = await masterchefContract.connect(owner).pendingRdx(0, owner.address)
+        const user1RdxRewards = await masterchefContract.connect(user1).pendingRdx(0, user1.address)
+        expect(ownerRdxRewards).to.equal(ethers.utils.parseUnits("9.999999999999", 18))
+        expect(user1RdxRewards).to.equal(ethers.utils.parseUnits("1.0"))
+
 
     })
 
     it('deposit token twice and check reward', async () => {
-        const [owner, addr1, addr2] = await ethers.getSigners()
+        const [owner] = await ethers.getSigners()
         // mint kcp token
         await kcpContract.mintToken(owner.address, ethers.utils.parseEther("1000"))
         // add a pool to Masterchef
@@ -52,17 +61,17 @@ describe('masterchef', () => {
         // approve and deposit kcp token
         await kcpContract.connect(owner).approve(masterchefContract.address, ethers.utils.parseEther("100"))
         await masterchefContract.connect(owner).deposit(0, ethers.utils.parseEther("10"))
-        const d1 = await hre.ethers.provider.getBlock("latest")
+        // const d1 = await hre.ethers.provider.getBlock("latest")
         // wait for 10 block       
         await hre.network.provider.send("hardhat_mine", ["0xA"])
-        const d2 = await hre.ethers.provider.getBlock("latest")
+        // const d2 = await hre.ethers.provider.getBlock("latest")
         // deposit kcp token
         await masterchefContract.connect(owner).deposit(0, ethers.utils.parseEther("10"))
-        const d3 = await hre.ethers.provider.getBlock("latest")
-        console.log(d1.number, d2.number, d3.number)
+        // const d3 = await hre.ethers.provider.getBlock("latest")
+        // console.log(d1.number, d2.number, d3.number)
         // check the rewards
         const rdxRewards = await masterchefContract.connect(owner).pendingRdx(0, owner.address)
-        console.log(ethers.utils.formatEther(rdxRewards));
+        // console.log(ethers.utils.formatEther(rdxRewards));
         expect(rdxRewards).to.equal(ethers.utils.parseEther("11").toString())
 
     })
@@ -85,7 +94,7 @@ describe('masterchef', () => {
     })
 
     it.skip('deposit token and claim', async () => {
-        const [owner, addr1, addr2] = await ethers.getSigners()
+        const [owner] = await ethers.getSigners()
         // mint kcp token
         await kcpContract.mintToken(owner.address, ethers.utils.parseEther("1000"))
         // add a pool to Masterchef

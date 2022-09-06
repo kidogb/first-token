@@ -8,7 +8,7 @@ import "./ERC20.sol";
 contract KCP is ERC20 {
     constructor() ERC20("KCP", "KCP") {}
 
-    function mintToken(address to, uint256 _quantity) public {
-        _mint(to, _quantity);
+    function mintToken(address to, uint256 _amount) public {
+        _mint(to, _amount);
     }
 }

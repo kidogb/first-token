@@ -8,6 +8,7 @@ contract MyMasterchef {
     struct UserInfo {
         uint256 amount; // total KCP token user provided
         uint256 rewardDebt;
+        uint256 reward; // actual reward earn
     }
 
     struct PoolInfo {
@@ -38,11 +39,6 @@ contract MyMasterchef {
     event Claim(uint256 pid, uint256 rdxReward, uint256 accRdxPerShare);
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
-    event EmergencyWithdraw(
-        address indexed user,
-        uint256 indexed pid,
-        uint256 amount
-    );
 
     constructor(
         RDX _rdx,
@@ -114,23 +110,28 @@ contract MyMasterchef {
                 pool.allocPoint) / totalAllocPoint;
             accRdxPerShare = accRdxPerShare + ((rdxReward * 1e12) / lpSupply);
         }
-        return (user.amount * accRdxPerShare) / 1e12 - user.rewardDebt;
+        return
+            user.reward +
+            (user.amount * accRdxPerShare) /
+            1e12 -
+            user.rewardDebt;
     }
 
     // claim pending reward RDX
-    function claimPendingRdx(uint256 _pid) public {
+    function claimPendingRdx(uint256 _pid, uint256 _amount) public {
         updatePool(_pid);
         PoolInfo memory pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
-        // updatePool(_pid);
-        uint256 claimRdx = (user.amount * pool.accRdxPerShare) /
+        uint256 pending = (user.amount * pool.accRdxPerShare) /
             1e12 -
             user.rewardDebt;
         // update rewardDebt
         user.rewardDebt = (user.amount * pool.accRdxPerShare) / 1e12;
+        // update reward
+        user.reward = user.reward + pending - _amount;
         // transfer token
-        safeRdxTransfer(msg.sender, claimRdx);
-        emit Claim(_pid, claimRdx, pool.accRdxPerShare);
+        safeRdxTransfer(msg.sender, _amount);
+        emit Claim(_pid, user.reward, pool.accRdxPerShare);
     }
 
     // Deposit KCP tokens to MasterChef for RDX allocation.
@@ -138,30 +139,29 @@ contract MyMasterchef {
         updatePool(_pid);
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
-        // updatePool(_pid);
         // transfer kcpToken
         pool.kcpToken.transferFrom(address(msg.sender), address(this), _amount);
         // update amount staking
+        user.reward += (user.amount * pool.accRdxPerShare) / 1e12;
         user.amount = user.amount + _amount;
-        user.rewardDebt =(user.amount * pool.accRdxPerShare) /
-            1e12;
+        user.rewardDebt = (user.amount * pool.accRdxPerShare) / 1e12;
         emit Deposit(msg.sender, _pid, _amount);
     }
 
-    // Withdraw KCP tokens from MasterChef.
+    // Withdraw KCP tokens and all unclaimed RDX from MasterChef.
     function withdraw(uint256 _pid, uint256 _amount) public {
         updatePool(_pid);
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         require(user.amount >= _amount, "exceeds withdrawal limit");
-        // updatePool(_pid);
         uint256 pending = (user.amount * pool.accRdxPerShare) /
             1e12 -
             user.rewardDebt;
-        safeRdxTransfer(msg.sender, pending);
+        // withdraw all reward
+        safeRdxTransfer(msg.sender, user.reward + pending);
         user.amount = user.amount - _amount;
-        user.rewardDebt =(user.amount * pool.accRdxPerShare) /
-            1e12;
+        user.reward = 0; // reset reward to zero
+        user.rewardDebt = (user.amount * pool.accRdxPerShare) / 1e12;
         pool.kcpToken.transfer(address(msg.sender), _amount);
         emit Withdraw(msg.sender, _pid, _amount);
     }

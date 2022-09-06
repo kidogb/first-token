@@ -240,11 +240,11 @@ const Home: NextPage = () => {
     }
   }
 
-  const onClickClaimRewards = async () => {
+  const onClickClaimRewards = async (amount: string) => {
     if (currentAccount && mcContract) {
       try {
         setLoading({ ...loading, claim: true })
-        const txClaim = await mcContract.claimPendingRdx(0)
+        const txClaim = await mcContract.claimPendingRdx(0, parseEther(amount))
         await txClaim.wait()
         displayNotify('Claim successfully', 'success')
         updatePoolAndWallet()

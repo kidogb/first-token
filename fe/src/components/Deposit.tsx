@@ -12,7 +12,7 @@ interface Props {
 
 export default function Deposit({ currentAccount, loadingApprove, loadingDeposit, onApprove, onDeposit }: Props) {
 
-  const [amount, setAmount] = useState<string>('2')
+  const [amount, setAmount] = useState<string>('0')
 
   async function approve(event: React.FormEvent) {
     event.preventDefault()
@@ -32,7 +32,7 @@ export default function Deposit({ currentAccount, loadingApprove, loadingDeposit
       <FormControl>
         <FormLabel htmlFor='amount' h='8'>Amount: </FormLabel>
         <InputGroup>
-          <NumberInput defaultValue={amount} min={1} max={1000} onChange={handleChange}>
+          <NumberInput defaultValue={amount} min={0} max={1000} onChange={handleChange}>
             <NumberInputField />
           </NumberInput>
           <InputRightAddon><Badge>KCP</Badge></InputRightAddon>

@@ -1,6 +1,6 @@
 // src/components/TransferERC20.tsx
 import React, { useState } from 'react'
-import { Badge, Button, IconButton, Center, InputGroup, InputRightAddon, NumberInput, NumberInputField, FormControl, FormLabel, Grid, GridItem } from '@chakra-ui/react'
+import { Text, Badge, Button, IconButton, Center, InputGroup, InputRightAddon, NumberInput, NumberInputField, FormControl, FormLabel, Grid, GridItem } from '@chakra-ui/react'
 import { VscDebugRestart } from 'react-icons/vsc'
 
 interface Props {
@@ -8,23 +8,26 @@ interface Props {
   rewards: string | undefined,
   loadingRewards: boolean,
   loadingClaim: boolean,
-  onClaim: () => void,
+  onClaim: (amount: string) => void,
   onViewRewards: () => void
 }
 
 export default function Rewards({ currentAccount, rewards, loadingRewards, loadingClaim, onClaim, onViewRewards }: Props) {
+  const [amount, setAmount] = useState<string>('0')
 
   async function transfer(event: React.FormEvent) {
     event.preventDefault()
-    onClaim()
+    onClaim(amount)
   }
+
+  const handleChange = (value: string) => setAmount(value)
 
   return (
     <form onSubmit={transfer}>
       <FormControl>
         <Grid>
           <GridItem colSpan={2} h='10'>
-            <FormLabel htmlFor='amount'>Rewards: </FormLabel>
+            <FormLabel htmlFor='amount'>{`Rewards: ${rewards}`} </FormLabel>
           </GridItem>
           <GridItem colStart={24} colEnd={24} h='10'>
             <IconButton
@@ -40,7 +43,7 @@ export default function Rewards({ currentAccount, rewards, loadingRewards, loadi
 
         </Grid>
         <InputGroup>
-          <NumberInput isDisabled value={rewards}>
+          <NumberInput min={0} max={Number(rewards)} value={amount} onChange={handleChange}>
             <NumberInputField />
           </NumberInput>
           <InputRightAddon><Badge>RDX</Badge></InputRightAddon>

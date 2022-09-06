@@ -141,9 +141,14 @@ contract MyMasterchef {
         UserInfo storage user = userInfo[_pid][msg.sender];
         // transfer kcpToken
         pool.kcpToken.transferFrom(address(msg.sender), address(this), _amount);
+        uint256 pending = (user.amount * pool.accRdxPerShare) /
+            1e12 -
+            user.rewardDebt;
         // update amount staking
-        user.reward += (user.amount * pool.accRdxPerShare) / 1e12;
         user.amount = user.amount + _amount;
+        // update reward
+        user.reward = user.reward + pending;
+        // update rewardDebt
         user.rewardDebt = (user.amount * pool.accRdxPerShare) / 1e12;
         emit Deposit(msg.sender, _pid, _amount);
     }

@@ -325,30 +325,6 @@ const Home: NextPage = () => {
       <Header connect={onClickConnect} disconnect={onClickDisconnect} isDisconnect={isDisconnect} rdxBalance={rdxBalance}/>
       <VStack>
 
-        {false &&
-          <Flex>
-            <Box></Box>
-            <Spacer />
-            <Box>
-              <Flex align='right' justify='right' w='100%' p={2}>
-                {/* <Box w='20%'>
-              <Text as='em' noOfLines={1} fontSize='md'>{parseFloat(kcpBalance || '0').toLocaleString('en')} KCP</Text>
-            </Box> */}
-                <Box w='30%'>
-                  <Text as='em' noOfLines={1} fontSize='md'>{parseFloat(rdxBalance || '0').toLocaleString('en')} RDX</Text>
-                </Box>
-                <Box w='50%'>
-                  <Link href={`https://goerli.etherscan.io/address/${currentAccount}`} isExternal>
-                    <Text as='samp' noOfLines={1} variant='outline' fontSize='md' colorScheme='blue'>{wrapText(currentAccount)}</Text>
-                  </Link>
-                </Box>
-                <Box w='20%'>
-                  <Text as='samp' fontSize='md' colorScheme='green'>{chainname?.toUpperCase()}</Text>
-                </Box>
-              </Flex>
-            </Box>
-          </Flex>
-        }
         {currentAccount &&
           <Box mb={0} p={4} w='100%' borderWidth="1px" borderRadius="lg">
             <Text noOfLines={1} fontWeight='bold'>

@@ -1,7 +1,6 @@
 //src/components/header.tsx
 import NextLink from "next/link"
-import { Text, Flex, useColorModeValue, Spacer, Heading, LinkBox, LinkOverlay, IconButton } from '@chakra-ui/react'
-import { BiUser, BiLogInCircle } from 'react-icons/all'
+import { Text, Flex, useColorModeValue, Spacer, Heading, LinkBox, LinkOverlay, Button } from '@chakra-ui/react'
 
 type Props = {
   connect: () => void,
@@ -29,18 +28,10 @@ export default function Header({ connect, disconnect, rdxBalance, isDisconnect =
         isRound
         size='lg'
         aria-label='Connect wallet'
-        icon={<BiLogInCircle />}
       /> :
         <>
           <Text mr={5} as='em' noOfLines={1} fontSize='md'>{parseFloat(rdxBalance || '0').toLocaleString('en')} RDX</Text>
-          <IconButton
-            colorScheme='gray'
-            onClick={disconnect}
-            isRound
-            size='lg'
-            aria-label='Disconnect'
-            icon={<BiUser />}
-          />
+          <Button onClick={isDisconnect ? connect : disconnect}>{isDisconnect ? 'Connect' : 'Disconnect'} </Button>
         </>
       }
 

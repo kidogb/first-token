@@ -22,18 +22,12 @@ export default function Header({ connect, disconnect, rdxBalance, isDisconnect =
         </NextLink>
       </LinkBox>
       <Spacer />
-      {isDisconnect ? <IconButton
-        colorScheme='orange'
-        onClick={connect}
-        isRound
-        size='lg'
-        aria-label='Connect wallet'
-      /> :
-        <>
-          <Text mr={5} as='em' noOfLines={1} fontSize='md'>{parseFloat(rdxBalance || '0').toLocaleString('en')} RDX</Text>
-          <Button onClick={isDisconnect ? connect : disconnect}>{isDisconnect ? 'Connect' : 'Disconnect'} </Button>
-        </>
-      }
+
+      <>
+        {!isDisconnect && <Text mr={5} as='em' noOfLines={1} fontSize='md'>{parseFloat(rdxBalance || '0').toLocaleString('en')} RDX</Text>}
+        <Button onClick={isDisconnect ? connect : disconnect}>{isDisconnect ? 'Connect' : 'Disconnect'} </Button>
+      </>
+
 
     </Flex>
   )

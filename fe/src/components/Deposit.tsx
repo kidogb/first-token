@@ -45,7 +45,7 @@ export default function Deposit({ currentAccount, kcpBalance, loadingApprove, lo
       <FormControl>
         <Flex p={2}>
           <Box>
-            <Text as='samp' noOfLines={1} variant='outline' fontSize='sm'>Amount:</Text>
+            <Text as='samp' noOfLines={1} variant='outline' fontSize='sm'>Balance:</Text>
           </Box>
           <Spacer />
           <Box>

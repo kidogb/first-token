@@ -310,6 +310,11 @@ const Home: NextPage = () => {
     }
   }
 
+  const wrapText = (text: string) => {
+    if (text.length <= 10) return text
+    else return text.slice(0, 4) + '...' + text.slice(-6)
+  }
+
 
   return (
     <>
@@ -317,24 +322,24 @@ const Home: NextPage = () => {
         <title>My Masterchef</title>
       </Head>
 
-      <Header connect={onClickConnect} disconnect={onClickDisconnect} isDisconnect={isDisconnect} />
+      <Header connect={onClickConnect} disconnect={onClickDisconnect} isDisconnect={isDisconnect} rdxBalance={rdxBalance}/>
       <VStack>
 
         {false &&
           <Flex>
             <Box></Box>
-            <Spacer/>
+            <Spacer />
             <Box>
-              <Flex align='right' justify='right' w='80%' p={2}>
+              <Flex align='right' justify='right' w='100%' p={2}>
                 {/* <Box w='20%'>
               <Text as='em' noOfLines={1} fontSize='md'>{parseFloat(kcpBalance || '0').toLocaleString('en')} KCP</Text>
             </Box> */}
                 <Box w='30%'>
                   <Text as='em' noOfLines={1} fontSize='md'>{parseFloat(rdxBalance || '0').toLocaleString('en')} RDX</Text>
                 </Box>
-                <Box w='20%'>
+                <Box w='50%'>
                   <Link href={`https://goerli.etherscan.io/address/${currentAccount}`} isExternal>
-                    <Text as='samp' noOfLines={1} variant='outline' fontSize='md' colorScheme='blue'>{currentAccount}</Text>
+                    <Text as='samp' noOfLines={1} variant='outline' fontSize='md' colorScheme='blue'>{wrapText(currentAccount)}</Text>
                   </Link>
                 </Box>
                 <Box w='20%'>

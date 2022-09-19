@@ -4,7 +4,7 @@ import hre, { ethers } from 'hardhat';
 
 
 describe('masterchef', () => {
-    let kcpContract: Contract
+    let lpContract: Contract
     let rdxContract: Contract
     let masterchefContract: Contract
 
@@ -12,32 +12,32 @@ describe('masterchef', () => {
         const rdxPerBlock = 1; // in decimals
         const startBlock = 0;
 
-        const kcp = await ethers.getContractFactory('KCP')
-        kcpContract = await kcp.deploy()
+        const lp = await ethers.getContractFactory('Token')
+        lpContract = await lp.deploy("LP", "LP")
 
         const rdx = await ethers.getContractFactory('RDX')
         rdxContract = await rdx.deploy()
 
         const masterchef = await ethers.getContractFactory('MyMasterchef')
-        masterchefContract = await masterchef.deploy(kcpContract.address, rdxPerBlock, startBlock)
+        masterchefContract = await masterchef.deploy(lpContract.address, rdxPerBlock, startBlock)
     })
 
     it('deposit token and check reward', async () => {
         const [owner, user1] = await ethers.getSigners()
-        // mint kcp token
-        await kcpContract.mintToken(owner.address, ethers.utils.parseEther("1000"))
-        await kcpContract.mintToken(user1.address, ethers.utils.parseEther("1000"))
+        // mint lp token
+        await lpContract.mintFrom(owner.address, ethers.utils.parseEther("1000"))
+        await lpContract.mintFrom(user1.address, ethers.utils.parseEther("1000"))
         // add a pool to Masterchef
-        await masterchefContract.add(1, kcpContract.address)
+        await masterchefContract.add(1, lpContract.address)
         // transfer RDX to Masterchef
         await rdxContract.connect(owner).transfer(masterchefContract.address, ethers.utils.parseEther("1000"));
-        // approve and deposit kcp token
-        await kcpContract.connect(owner).approve(masterchefContract.address, ethers.utils.parseEther("100"))
-        await kcpContract.connect(user1).approve(masterchefContract.address, ethers.utils.parseEther("100"))
+        // approve and deposit lp token
+        await lpContract.connect(owner).approve(masterchefContract.address, ethers.utils.parseEther("100"))
+        await lpContract.connect(user1).approve(masterchefContract.address, ethers.utils.parseEther("100"))
         await masterchefContract.connect(owner).deposit(0, ethers.utils.parseEther("9"))
         await masterchefContract.connect(user1).deposit(0, ethers.utils.parseEther("1"))
         // verify pool balance
-        const lpPool = await kcpContract.balanceOf(masterchefContract.address)
+        const lpPool = await lpContract.balanceOf(masterchefContract.address)
         expect(lpPool).to.equal(ethers.utils.parseEther("10"))
 
         // wait for 10 block       
@@ -52,20 +52,20 @@ describe('masterchef', () => {
 
     it('deposit token twice and check reward', async () => {
         const [owner] = await ethers.getSigners()
-        // mint kcp token
-        await kcpContract.mintToken(owner.address, ethers.utils.parseEther("1000"))
+        // mint lp token
+        await lpContract.mintFrom(owner.address, ethers.utils.parseEther("1000"))
         // add a pool to Masterchef
-        await masterchefContract.add(1, kcpContract.address)
+        await masterchefContract.add(1, lpContract.address)
         // transfer RDX to Masterchef
         await rdxContract.connect(owner).transfer(masterchefContract.address, ethers.utils.parseEther("1000"));
-        // approve and deposit kcp token
-        await kcpContract.connect(owner).approve(masterchefContract.address, ethers.utils.parseEther("100"))
+        // approve and deposit lp token
+        await lpContract.connect(owner).approve(masterchefContract.address, ethers.utils.parseEther("100"))
         await masterchefContract.connect(owner).deposit(0, ethers.utils.parseEther("10"))
         // const d1 = await hre.ethers.provider.getBlock("latest")
         // wait for 10 block       
         await hre.network.provider.send("hardhat_mine", ["0xA"])
         // const d2 = await hre.ethers.provider.getBlock("latest")
-        // deposit kcp token
+        // deposit lp token
         await masterchefContract.connect(owner).deposit(0, ethers.utils.parseEther("10"))
         // const d3 = await hre.ethers.provider.getBlock("latest")
         // console.log(d1.number, d2.number, d3.number)
@@ -78,16 +78,16 @@ describe('masterchef', () => {
 
     it('deposit token and withdraw', async () => {
         const [owner, addr1, addr2] = await ethers.getSigners()
-        // mint kcp token
-        await kcpContract.mintToken(owner.address, ethers.utils.parseEther("1000"))
+        // mint lp token
+        await lpContract.mintFrom(owner.address, ethers.utils.parseEther("1000"))
         // add a pool to Masterchef
-        await masterchefContract.add(1, kcpContract.address)
+        await masterchefContract.add(1, lpContract.address)
         // transfer RDX to Masterchef
         await rdxContract.connect(owner).transfer(masterchefContract.address, ethers.utils.parseEther("1000"));
-        // approve and deposit kcp token to pool
-        await kcpContract.connect(owner).approve(masterchefContract.address, ethers.utils.parseEther("100"))
+        // approve and deposit lp token to pool
+        await lpContract.connect(owner).approve(masterchefContract.address, ethers.utils.parseEther("100"))
         await masterchefContract.connect(owner).deposit(0, ethers.utils.parseEther("10"))
-        // withdraw kcp token from pool
+        // withdraw lp token from pool
         await masterchefContract.connect(owner).withdraw(0, ethers.utils.parseEther("5"))
         const userInfo = await masterchefContract.connect(owner).userInfo(0, owner.address)
         expect(userInfo.amount).to.equal(ethers.utils.parseEther("5").toString())
@@ -95,19 +95,19 @@ describe('masterchef', () => {
 
     it.skip('deposit token and claim', async () => {
         const [owner] = await ethers.getSigners()
-        // mint kcp token
-        await kcpContract.mintToken(owner.address, ethers.utils.parseEther("1000"))
+        // mint lp token
+        await lpContract.mintFrom(owner.address, ethers.utils.parseEther("1000"))
         // add a pool to Masterchef
-        await masterchefContract.add(1, kcpContract.address)
+        await masterchefContract.add(1, lpContract.address)
         // transfer RDX to Masterchef
         await rdxContract.connect(owner).transfer(masterchefContract.address, ethers.utils.parseEther("1000"))
         expect(await rdxContract.balanceOf(masterchefContract.address)).to.equal(ethers.utils.parseEther("1000"))
-        // approve and deposit kcp token to pool
-        await kcpContract.connect(owner).approve(masterchefContract.address, ethers.utils.parseEther("100"))
+        // approve and deposit lp token to pool
+        await lpContract.connect(owner).approve(masterchefContract.address, ethers.utils.parseEther("100"))
         await masterchefContract.connect(owner).deposit(0, ethers.utils.parseEther("10"))
         // wait for 10 block       
         await hre.network.provider.send("hardhat_mine", ["0xA"])
-        // claim kcp token from pool
+        // claim lp token from pool
         const rdxOwnerBeforeClaim = await rdxContract.balanceOf(owner.address)
         const userInfo0 = await masterchefContract.userInfo(0, owner.address)
         console.log("Before: ", ethers.utils.formatEther(userInfo0.reward).toString())
